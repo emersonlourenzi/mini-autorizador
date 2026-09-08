@@ -1,0 +1,102 @@
+{
+  "info": {
+    "_postman_id": "de58f44e-eeaf-4667-bdfb-d2b252fe0462",
+    "name": "mini-autorizador",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "8645927"
+  },
+  "item": [
+    {
+      "name": "Cartão",
+      "item": [
+        {
+          "name": "criar cartão",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"numeroCartao\": \"4321432143214321\",\n    \"senha\": \"1234\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "0.0.0.0:8080/cartoes",
+              "host": [
+                "0",
+                "0",
+                "0",
+                "0"
+              ],
+              "port": "8080",
+              "path": [
+                "cartoes"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "saldo cartão",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "0.0.0.0:8080/cartoes/9510608794979900",
+              "host": [
+                "0",
+                "0",
+                "0",
+                "0"
+              ],
+              "port": "8080",
+              "path": [
+                "cartoes",
+                "9510608794979900"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Transação",
+      "item": [
+        {
+          "name": "criar transacao",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"numeroCartao\": \"4321432143214321\",\n    \"senhaCartao\": \"1234\",\n    \"valor\": \"10\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "0.0.0.0:8080/transacoes",
+              "host": [
+                "0",
+                "0",
+                "0",
+                "0"
+              ],
+              "port": "8080",
+              "path": [
+                "transacoes"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

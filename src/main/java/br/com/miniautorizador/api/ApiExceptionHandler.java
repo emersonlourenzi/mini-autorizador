@@ -24,7 +24,9 @@ public class ApiExceptionHandler {
             .sorted(java.util.Comparator.comparing(FieldErrorResponse::campo)
                 .thenComparing(FieldErrorResponse::mensagem))
             .toList();
-        return ResponseEntity.badRequest().body(new ValidationErrorResponse(400, errors));
+        return ResponseEntity.badRequest()
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(new ValidationErrorResponse(400, errors));
     }
 
     @ExceptionHandler(TransacaoNegadaException.class)

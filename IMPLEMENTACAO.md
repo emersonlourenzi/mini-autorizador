@@ -71,7 +71,7 @@ O comando executa a suíte, empacota a aplicação e gera os relatórios de cobe
 
 Não há limite mínimo de cobertura nem exclusões personalizadas. A configuração mede a cobertura, sem reprovar o build por percentual. O diretório `target/` já está ignorado pelo Git.
 
-Na execução desta configuração, os 74 testes passaram: cobertura de linhas de 90,24% (74/82) e de branches de 100% (8/8). As oito linhas não cobertas pertencem à inicialização da aplicação e à configuração OpenAPI. Código gerado pode ser filtrado automaticamente pelo JaCoCo.
+Na execução desta configuração, os 75 testes passaram: cobertura de linhas de 90,48% (76/84) e de branches de 100% (8/8). As oito linhas não cobertas pertencem à inicialização da aplicação e à configuração OpenAPI. Código gerado pode ser filtrado automaticamente pelo JaCoCo.
 
 Esses percentuais representam a execução da suíte isolada; não comprovam o funcionamento do SQL ou da concorrência no banco. As validações reais permanecem separadas.
 
@@ -83,7 +83,7 @@ A execução utiliza Ubuntu, Java 17 Temurin e cache das dependências Maven. O 
 
 Na aba **Actions**, abra uma execução para consultar os resultados. Na seção **Artifacts**, o arquivo `cobertura-jacoco` contém o relatório completo: baixe, extraia e abra `index.html` no navegador. Os relatórios `resultados-testes` também são disponibilizados quando gerados, inclusive se os testes falharem, para ajudar no diagnóstico. Os artefatos ficam disponíveis por 14 dias.
 
-Falhas na compilação ou nos testes reprovam a execução. A cobertura continua informativa, sem percentual mínimo obrigatório. O workflow não realiza deploy. A execução remota será verificada após o envio do arquivo ao GitHub.
+Falhas na compilação ou nos testes reprovam a execução. A cobertura continua informativa, sem percentual mínimo obrigatório. O workflow não realiza deploy. As actions utilizam Node.js 24 internamente; a aplicação continua usando Java 17. Após alterações no workflow, confira a nova execução na aba Actions.
 
 ## Swagger UI
 
@@ -94,6 +94,18 @@ Expanda a operação desejada, clique em **Try it out**, preencha os dados e cli
 A integração utiliza `springdoc-openapi-starter-webmvc-ui`. A documentação de cada operação está nas anotações `@SwaggerCreateCartao`, `@SwaggerReadBalance` e `@SwaggerAuthorizeTransacao`, nos pacotes `controller/*/swagger`. Os controllers mantêm apenas a anotação de documentação por método; a configuração geral está em `OpenApiConfiguration`.
 
 Os exemplos incluem criação, transação e erros de validação. As respostas de saldo são numéricas, recusas de transação são texto e a consulta inexistente retorna 404 sem corpo. Os contratos HTTP existentes foram preservados.
+
+## Collection do Postman
+
+A collection [mini-autorizador.postman_collection.json](mini-autorizador.postman_collection.json) está na raiz do projeto e contém requisições para criar cartão, consultar saldo e autorizar transação.
+
+Importe esse arquivo no Postman e inicie o banco e a aplicação conforme as instruções acima. Antes de enviar as requisições:
+
+- Ajuste as URLs exportadas com `0.0.0.0:8080` para `http://localhost:8080`, ou para o endereço em que a API estiver executando.
+- Crie um cartão e utilize o mesmo número na consulta de saldo e na transação. A consulta exportada contém um número diferente do utilizado na criação.
+- Na transação, informe a senha do cartão criado e envie `valor` como número JSON, por exemplo `"valor": 10.00`; o exemplo exportado está como string.
+
+Execute a criação, consulte o saldo inicial, envie uma transação e consulte novamente para conferir o débito. Repetir a criação com o mesmo número retorna 422, conforme o contrato. A collection oferece chamadas manuais e não contém testes automatizados do Postman.
 
 ## Exemplo de uso
 
@@ -130,7 +142,7 @@ Resposta: `201` com texto `OK`. Após essa compra, a consulta retorna `490.00`.
 | Transação sem saldo suficiente | 422, texto `SALDO_INSUFICIENTE` |
 | Entrada inválida ou JSON malformado | 400 |
 
-Erros de validação dos campos retornam HTTP 400 com o campo e a mensagem, sem incluir o valor rejeitado. Exemplo de senha com cinco dígitos:
+Erros de validação dos campos retornam HTTP 400 com `Content-Type: application/json`, o campo e a mensagem, sem incluir o valor rejeitado. Em `/transacoes`, esse formato de erro também é devolvido quando o cliente envia `Accept: text/plain`, como no Swagger UI. Exemplo de senha com cinco dígitos:
 
 ```json
 {

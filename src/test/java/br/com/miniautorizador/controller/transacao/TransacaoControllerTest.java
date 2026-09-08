@@ -80,9 +80,11 @@ class TransacaoControllerTest {
         verifyNoInteractions(service);
     }
 
-    @org.junit.jupiter.api.Test
-    void explainsInvalidAmount() throws Exception {
-        mvc.perform(post("/transacoes").contentType(MediaType.APPLICATION_JSON).content(body("0")))
+    @ParameterizedTest
+    @ValueSource(strings = {"*/*", "text/plain"})
+    void explainsInvalidAmount(String accept) throws Exception {
+        mvc.perform(post("/transacoes").contentType(MediaType.APPLICATION_JSON).accept(accept).content(body("0")))
+            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.status").value(400))
             .andExpect(jsonPath("$.erros[0].campo").value("valor"))
