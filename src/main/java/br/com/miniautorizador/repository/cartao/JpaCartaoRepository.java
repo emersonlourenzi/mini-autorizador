@@ -19,8 +19,9 @@ interface JpaCartaoRepository extends JpaRepository<CartaoEntity, String> {
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("""
         update CartaoEntity cartao
-           set cartao.saldo = :saldo
+           set cartao.saldo = cartao.saldo - :valor
          where cartao.numeroCartao = :numeroCartao
+           and cartao.saldo >= :valor
         """)
-    void updateBalance(String numeroCartao, BigDecimal saldo);
+    int debitIfSufficientBalance(String numeroCartao, BigDecimal valor);
 }

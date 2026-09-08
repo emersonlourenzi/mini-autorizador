@@ -33,12 +33,9 @@ public class TransacaoService {
     }
 
     private Cartao validateBalanceAndDebit(Cartao cartao, TransacaoRequest request) {
-        var validatedCard = Optional.of(cartao)
-            .filter(value -> value.getSaldo().compareTo(request.valor()) >= 0)
+        return Optional.of(cartao)
+            .filter(value -> repository.debitIfSufficientBalance(value.getNumeroCartao(), request.valor()))
             .orElseThrow(() -> denied(MotivoNegacao.SALDO_INSUFICIENTE));
-
-        repository.updateBalance(validatedCard.getNumeroCartao(), validatedCard.getSaldo().subtract(request.valor()));
-        return validatedCard;
     }
 
     private TransacaoNegadaException denied(MotivoNegacao motivo) {

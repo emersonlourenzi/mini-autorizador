@@ -13,10 +13,12 @@ import static org.mockito.Mockito.*;
 
 class CartaoPersistenceAdapterTest {
     @Test
-    void updatesOnlyBalanceThroughRepository() {
+    void translatesAffectedRowsIntoDebitResult() {
         var balance = new BigDecimal("490.00");
-        adapter.updateBalance("0123", balance);
-        verify(repository).updateBalance("0123", balance);
+        when(repository.debitIfSufficientBalance("0123", balance)).thenReturn(1, 0);
+        assertThat(adapter.debitIfSufficientBalance("0123", balance)).isTrue();
+        assertThat(adapter.debitIfSufficientBalance("0123", balance)).isFalse();
+        verify(repository, times(2)).debitIfSufficientBalance("0123", balance);
         verifyNoMoreInteractions(repository);
     }
     private final JpaCartaoRepository repository = mock(JpaCartaoRepository.class);

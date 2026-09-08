@@ -21,8 +21,8 @@ class CartaoPersistenceAdapter implements CartaoRepository {
 
     @Override
     @Transactional
-    public void updateBalance(String numeroCartao, BigDecimal saldo) {
-        repository.updateBalance(numeroCartao, saldo);
+    public boolean debitIfSufficientBalance(String numeroCartao, BigDecimal valor) {
+        return repository.debitIfSufficientBalance(numeroCartao, valor) == 1;
     }
 
     @Override

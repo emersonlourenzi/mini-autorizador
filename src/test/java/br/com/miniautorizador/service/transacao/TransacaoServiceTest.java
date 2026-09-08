@@ -7,9 +7,11 @@ import br.com.miniautorizador.repository.cartao.CartaoRepository;
 import br.com.miniautorizador.util.enums.MotivoNegacao;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
+
 import java.math.BigDecimal;
 import java.util.Optional;
+
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -18,14 +20,15 @@ class TransacaoServiceTest {
     private final TransacaoService service = new TransacaoService(repository);
 
     @ParameterizedTest
-    @CsvSource({"10.00,490.00", "500.00,0.00", "0.01,499.99", "10,490.00"})
-    void debitsExactAmount(String amount, String expectedBalance) {
+    @ValueSource(strings = {"10.00", "500.00", "0.01", "10"})
+    void debitsExactAmount(String amount) {
         when(repository.findByCardNumber("0123"))
             .thenReturn(Optional.of(Cartao.create("0123", "0123")));
+        when(repository.debitIfSufficientBalance("0123", new BigDecimal(amount))).thenReturn(true);
         assertThat(service.authorize(request("0123", amount))).isEqualTo("OK");
         var order = inOrder(repository);
         order.verify(repository).findByCardNumber("0123");
-        order.verify(repository).updateBalance("0123", new BigDecimal(expectedBalance));
+        order.verify(repository).debitIfSufficientBalance("0123", new BigDecimal(amount));
         verifyNoMoreInteractions(repository);
     }
 
@@ -46,7 +49,23 @@ class TransacaoServiceTest {
     void rejectsInsufficientBalanceWithoutDebit() {
         when(repository.findByCardNumber("0123"))
             .thenReturn(Optional.of(Cartao.create("0123", "0123")));
-        assertDenied(request("0123", "500.01"), MotivoNegacao.SALDO_INSUFICIENTE);
+        when(repository.debitIfSufficientBalance("0123", new BigDecimal("500.01"))).thenReturn(false);
+        assertThatThrownBy(() -> service.authorize(request("0123", "500.01")))
+            .isInstanceOfSatisfying(TransacaoNegadaException.class,
+                exception -> assertThat(exception.getMotivo()).isEqualTo(MotivoNegacao.SALDO_INSUFICIENTE));
+        verify(repository).findByCardNumber("0123");
+        verify(repository).debitIfSufficientBalance("0123", new BigDecimal("500.01"));
+        verifyNoMoreInteractions(repository);
+    }
+
+    @Test
+    void deniesWhenDatabaseBalanceChangedSinceRead() {
+        when(repository.findByCardNumber("0123"))
+            .thenReturn(Optional.of(Cartao.create("0123", "0123")));
+        when(repository.debitIfSufficientBalance("0123", new BigDecimal("10.00"))).thenReturn(false);
+        assertThatThrownBy(() -> service.authorize(request("0123", "10.00")))
+            .isInstanceOfSatisfying(TransacaoNegadaException.class,
+                exception -> assertThat(exception.getMotivo()).isEqualTo(MotivoNegacao.SALDO_INSUFICIENTE));
     }
 
     @Test
@@ -54,7 +73,7 @@ class TransacaoServiceTest {
         when(repository.findByCardNumber("0123"))
             .thenReturn(Optional.of(Cartao.create("0123", "0123")));
         var error = new IllegalStateException("database unavailable");
-        doThrow(error).when(repository).updateBalance(any(), any());
+        when(repository.debitIfSufficientBalance(any(), any())).thenThrow(error);
         assertThatThrownBy(() -> service.authorize(request("0123", "10.00"))).isSameAs(error);
     }
 

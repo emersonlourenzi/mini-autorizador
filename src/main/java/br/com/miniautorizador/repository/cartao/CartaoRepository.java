@@ -13,5 +13,5 @@ public interface CartaoRepository {
 
     Optional<Cartao> findByCardNumber(String numeroCartao);
 
-    void updateBalance(String numeroCartao, BigDecimal saldo);
+    boolean debitIfSufficientBalance(String numeroCartao, BigDecimal valor);
 }

@@ -120,6 +120,19 @@ Valores monetários usam `BigDecimal` e coluna `DECIMAL(19,2)`. Cartões iniciam
 
 O desafio sem `if` está implementado no código da aplicação, sem utilizar `break` ou `continue`. As verificações usam `Optional`, `filter`, `map` e `orElseThrow`, preservando a ordem das regras e os motivos de recusa.
 
-O débito calcula o novo saldo a partir da leitura e o grava dentro de uma transação; isso ainda não garante correção entre compras simultâneas. A proteção de concorrência permanece para uma evolução separada.
+A autorização verifica a senha e executa um débito atômico no banco, dentro da transação. O saldo consultado anteriormente não é utilizado para calcular o novo saldo. A atualização segue esta condição:
+
+```sql
+UPDATE cartao
+   SET saldo = saldo - :valor
+ WHERE numero_cartao = :numeroCartao
+   AND saldo >= :valor
+```
+
+Uma linha atualizada representa aprovação. Nenhuma linha atualizada, após a verificação de existência e senha, resulta em `SALDO_INSUFICIENTE`. O InnoDB coordena as atualizações concorrentes sobre o mesmo cartão, inclusive entre instâncias diferentes da aplicação, sem bloqueios em memória da JVM.
+
+Com saldo de 10.00, duas compras simultâneas de 10.00 resultam em uma aprovação e uma recusa, com saldo final zero. Com saldo de 20.00, ambas podem ser aprovadas. Esta operação não implementa idempotência: cada requisição válida representa uma nova compra.
+
+A validação separada com MySQL 5.7 e duas JVMs confirmou 20 rodadas do primeiro cenário e duas do segundo. Os saldos foram consultados pelas duas instâncias após cada rodada e confirmados por SQL ao final. Também foram executadas 120 rodadas com quatro JVMs reais: grupos de três ou quatro compras simultâneas sobre o mesmo cartão, com saldo para uma, duas ou todas as compras. As 420 requisições concorrentes produziram exatamente as aprovações permitidas pelo saldo, e os 120 cartões terminaram com saldo zero, conferido nas quatro instâncias e por SQL. Essas validações não integram a suíte unitária e não equivalem a um teste de carga.
 
 As senhas ainda são armazenadas sem hash. BCrypt e a restrição de quatro dígitos serão incorporados em evoluções separadas, mantendo os contratos da API.
