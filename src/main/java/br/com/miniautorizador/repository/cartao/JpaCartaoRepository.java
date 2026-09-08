@@ -15,4 +15,12 @@ interface JpaCartaoRepository extends JpaRepository<CartaoEntity, String> {
         VALUES (:numeroCartao, :senha, :saldo)
         """, nativeQuery = true)
     void insert(String numeroCartao, String senha, BigDecimal saldo);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("""
+        update CartaoEntity cartao
+           set cartao.saldo = :saldo
+         where cartao.numeroCartao = :numeroCartao
+        """)
+    void updateBalance(String numeroCartao, BigDecimal saldo);
 }

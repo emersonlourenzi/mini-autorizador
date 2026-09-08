@@ -12,6 +12,13 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class CartaoPersistenceAdapterTest {
+    @Test
+    void updatesOnlyBalanceThroughRepository() {
+        var balance = new BigDecimal("490.00");
+        adapter.updateBalance("0123", balance);
+        verify(repository).updateBalance("0123", balance);
+        verifyNoMoreInteractions(repository);
+    }
     private final JpaCartaoRepository repository = mock(JpaCartaoRepository.class);
     private final CartaoPersistenceAdapter adapter = new CartaoPersistenceAdapter(repository);
 

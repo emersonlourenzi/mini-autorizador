@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.SQLException;
+import java.math.BigDecimal;
 import java.util.Optional;
 
 @Repository
@@ -17,6 +18,12 @@ import java.util.Optional;
 class CartaoPersistenceAdapter implements CartaoRepository {
 
     private final JpaCartaoRepository repository;
+
+    @Override
+    @Transactional
+    public void updateBalance(String numeroCartao, BigDecimal saldo) {
+        repository.updateBalance(numeroCartao, saldo);
+    }
 
     @Override
     @Transactional
