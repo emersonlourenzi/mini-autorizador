@@ -61,6 +61,20 @@ A suíte utiliza JUnit, AssertJ, Mockito e MockMvc standalone. Não inicia a apl
 
 Os testes verificam domínio, serviços, conversões utilizadas, tratamento de erros, validações e contratos HTTP. Controllers usam serviços mockados; serviços e adapters usam repositórios mockados. A execução do SQL, as transações reais e a persistência entre reinícios exigem validação separada com a aplicação conectada ao MySQL.
 
+### Cobertura com JaCoCo
+
+```bash
+./mvnw clean verify
+```
+
+O comando executa a suíte, empacota a aplicação e gera os relatórios de cobertura em `target/site/jacoco/`: `index.html` para navegação no navegador, `jacoco.xml` e `jacoco.csv` para ferramentas externas. O agente é preparado antes dos testes; o relatório é gerado na fase `verify`. Executar somente `test` não gera o relatório.
+
+Não há limite mínimo de cobertura nem exclusões personalizadas. A configuração mede a cobertura, sem reprovar o build por percentual. O diretório `target/` já está ignorado pelo Git.
+
+Na execução desta configuração, os 74 testes passaram: cobertura de linhas de 94,87% (74/78) e de branches de 100% (8/8). As quatro linhas não cobertas pertencem à inicialização da aplicação e à conversão `CartaoMapper.toEntity`, que não é usada pela inserção SQL atual. Código gerado pode ser filtrado automaticamente pelo JaCoCo.
+
+Esses percentuais representam a execução da suíte isolada; não comprovam o funcionamento do SQL ou da concorrência no banco. As validações reais permanecem separadas.
+
 ## Exemplo de uso
 
 Com a aplicação iniciada, crie um cartão cujo número ainda não esteja cadastrado:
