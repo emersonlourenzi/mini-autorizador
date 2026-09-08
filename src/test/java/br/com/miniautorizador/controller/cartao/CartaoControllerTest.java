@@ -1,13 +1,12 @@
 package br.com.miniautorizador.controller.cartao;
 
-import br.com.miniautorizador.model.cartao.Cartao;
-import br.com.miniautorizador.service.cartao.CartaoService;
-import br.com.miniautorizador.model.cartao.request.CreateCartaoRequest;
-import br.com.miniautorizador.exceptions.cartao.DuplicateCartaoException;
-import br.com.miniautorizador.exceptions.cartao.CartaoNotFoundException;
 import br.com.miniautorizador.api.ApiExceptionHandler;
+import br.com.miniautorizador.exceptions.cartao.CartaoNotFoundException;
+import br.com.miniautorizador.exceptions.cartao.DuplicateCartaoException;
+import br.com.miniautorizador.model.cartao.Cartao;
+import br.com.miniautorizador.model.cartao.request.CreateCartaoRequest;
+import br.com.miniautorizador.service.cartao.CartaoService;
 import org.junit.jupiter.api.AfterEach;
-import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -16,13 +15,14 @@ import org.springframework.http.MediaType;
 import org.springframework.test.json.JsonCompareMode;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 
-import java.util.UUID;
 import java.math.BigDecimal;
+import java.util.UUID;
 
 import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 class CartaoControllerTest {

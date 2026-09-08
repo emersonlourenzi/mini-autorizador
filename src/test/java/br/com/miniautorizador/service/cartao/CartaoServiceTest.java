@@ -1,14 +1,16 @@
 package br.com.miniautorizador.service.cartao;
 
-import br.com.miniautorizador.exceptions.cartao.DuplicateCartaoException;
 import br.com.miniautorizador.exceptions.cartao.CartaoNotFoundException;
+import br.com.miniautorizador.exceptions.cartao.DuplicateCartaoException;
 import br.com.miniautorizador.model.cartao.Cartao;
-import java.util.Optional;
 import br.com.miniautorizador.model.cartao.request.CreateCartaoRequest;
 import br.com.miniautorizador.repository.cartao.CartaoRepository;
-import org.junit.jupiter.api.Test;
 import br.com.miniautorizador.service.security.PasswordHasher;
+import org.junit.jupiter.api.Test;
+
 import java.math.BigDecimal;
+import java.util.Optional;
+
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 

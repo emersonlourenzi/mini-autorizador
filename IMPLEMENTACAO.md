@@ -71,9 +71,19 @@ O comando executa a suíte, empacota a aplicação e gera os relatórios de cobe
 
 Não há limite mínimo de cobertura nem exclusões personalizadas. A configuração mede a cobertura, sem reprovar o build por percentual. O diretório `target/` já está ignorado pelo Git.
 
-Na execução desta configuração, os 74 testes passaram: cobertura de linhas de 89,16% (74/83) e de branches de 100% (8/8). As nove linhas não cobertas pertencem à inicialização da aplicação, à configuração OpenAPI e à conversão `CartaoMapper.toEntity`, que não é usada pela inserção SQL atual. Código gerado pode ser filtrado automaticamente pelo JaCoCo.
+Na execução desta configuração, os 74 testes passaram: cobertura de linhas de 90,24% (74/82) e de branches de 100% (8/8). As oito linhas não cobertas pertencem à inicialização da aplicação e à configuração OpenAPI. Código gerado pode ser filtrado automaticamente pelo JaCoCo.
 
 Esses percentuais representam a execução da suíte isolada; não comprovam o funcionamento do SQL ou da concorrência no banco. As validações reais permanecem separadas.
+
+### Integração contínua no GitHub Actions
+
+O workflow [CI](.github/workflows/ci.yml) executa automaticamente em pushes e pull requests. Também pode ser iniciado manualmente pela aba **Actions**, selecionando **CI → Run workflow**.
+
+A execução utiliza Ubuntu, Java 17 Temurin e cache das dependências Maven. O comando `./mvnw --batch-mode --no-transfer-progress clean verify` compila, executa os testes e gera a cobertura. As opções adicionais apenas ajustam a saída para execução automatizada. Não é necessário configurar banco, containers ou secrets.
+
+Na aba **Actions**, abra uma execução para consultar os resultados. Na seção **Artifacts**, o arquivo `cobertura-jacoco` contém o relatório completo: baixe, extraia e abra `index.html` no navegador. Os relatórios `resultados-testes` também são disponibilizados quando gerados, inclusive se os testes falharem, para ajudar no diagnóstico. Os artefatos ficam disponíveis por 14 dias.
+
+Falhas na compilação ou nos testes reprovam a execução. A cobertura continua informativa, sem percentual mínimo obrigatório. O workflow não realiza deploy. A execução remota será verificada após o envio do arquivo ao GitHub.
 
 ## Swagger UI
 
@@ -147,7 +157,7 @@ A lista pode conter mais de um erro. JSON malformado continua retornando 400 pel
 
 O número do cartão é uma string e a chave primária, preservando zeros à esquerda. A criação utiliza `INSERT`, sem atualizar registros existentes. A chave primária garante unicidade; somente o erro MySQL de chave duplicada, código 1062 e SQLState 23000, é convertido em duplicidade de cartão.
 
-Valores monetários usam `BigDecimal` e coluna `DECIMAL(19,2)`. Cartões iniciam com `500.00`. As verificações de autorização seguem a ordem cartão existente, senha correta e saldo suficiente. Uma compra pode consumir todo o saldo; uma recusa não executa o débito. Transações não são armazenadas, conforme permitido pelo enunciado.
+Valores monetários usam `BigDecimal` e coluna `DECIMAL(19,2)` para manter precisão decimal nos cálculos de saldo e débito, evitando os erros de representação binária de `float` e `double`. Cartões iniciam com `500.00`. As verificações de autorização seguem a ordem cartão existente, senha correta e saldo suficiente. Uma compra pode consumir todo o saldo; uma recusa não executa o débito. Transações não são armazenadas, conforme permitido pelo enunciado.
 
 ### Suposições sobre entradas
 

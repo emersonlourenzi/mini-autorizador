@@ -4,10 +4,10 @@ import br.com.miniautorizador.exceptions.transacao.TransacaoNegadaException;
 import br.com.miniautorizador.model.cartao.Cartao;
 import br.com.miniautorizador.model.transacao.request.TransacaoRequest;
 import br.com.miniautorizador.repository.cartao.CartaoRepository;
-import br.com.miniautorizador.util.enums.MotivoNegacao;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.BeforeEach;
 import br.com.miniautorizador.service.security.PasswordHasher;
+import br.com.miniautorizador.util.enums.MotivoNegacao;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 

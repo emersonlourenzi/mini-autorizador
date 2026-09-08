@@ -5,9 +5,11 @@ import br.com.miniautorizador.model.cartao.Cartao;
 import br.com.miniautorizador.repository.cartao.entity.CartaoEntity;
 import org.junit.jupiter.api.Test;
 import org.springframework.dao.DataIntegrityViolationException;
+
 import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.util.Optional;
+
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 

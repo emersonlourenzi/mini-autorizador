@@ -1,7 +1,7 @@
 package br.com.miniautorizador.service.cartao;
 
-import br.com.miniautorizador.exceptions.cartao.DuplicateCartaoException;
 import br.com.miniautorizador.exceptions.cartao.CartaoNotFoundException;
+import br.com.miniautorizador.exceptions.cartao.DuplicateCartaoException;
 import br.com.miniautorizador.model.cartao.Cartao;
 import br.com.miniautorizador.model.cartao.request.CreateCartaoRequest;
 import br.com.miniautorizador.repository.cartao.CartaoRepository;
