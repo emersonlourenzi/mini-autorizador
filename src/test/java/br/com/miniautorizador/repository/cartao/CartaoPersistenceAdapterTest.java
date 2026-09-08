@@ -1,80 +1,63 @@
 package br.com.miniautorizador.repository.cartao;
 
+import br.com.miniautorizador.exceptions.cartao.DuplicateCartaoException;
 import br.com.miniautorizador.model.cartao.Cartao;
-import jakarta.persistence.EntityManager;
+import br.com.miniautorizador.repository.cartao.entity.CartaoEntity;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.math.BigDecimal;
-import java.util.UUID;
+import java.sql.SQLException;
+import java.util.Optional;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-
-@SpringBootTest
-@Transactional
 class CartaoPersistenceAdapterTest {
-
-    @Autowired
-    private CartaoRepository repository;
-
-    @Autowired
-    private EntityManager entityManager;
-
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
+    private final JpaCartaoRepository repository = mock(JpaCartaoRepository.class);
+    private final CartaoPersistenceAdapter adapter = new CartaoPersistenceAdapter(repository);
 
     @Test
-    void insertsAndReadsCardFromDatabase() {
-        var cartao = Cartao.create(cardNumber(), "0123");
-
-        var inserted = repository.insert(cartao);
-        entityManager.clear();
-
-        assertThat(inserted).usingRecursiveComparison().isEqualTo(cartao);
-        assertThat(repository.existsByCardNumber(cartao.getNumeroCartao())).isTrue();
-        assertThat(repository.findByCardNumber(cartao.getNumeroCartao())).hasValueSatisfying(found ->
-            assertThat(found).usingRecursiveComparison().isEqualTo(cartao));
+    void insertsWithoutUsingMerge() {
+        var card = Cartao.create("0123", "1234");
+        assertThat(adapter.insert(card)).isSameAs(card);
+        verify(repository).insert("0123", "1234", new BigDecimal("500.00"));
+        verifyNoMoreInteractions(repository);
     }
 
     @Test
-    void readsPersistedBalanceWithoutResettingIt() {
-        var cartao = Cartao.restore(cardNumber(), "1234", new BigDecimal("495.15"));
-        repository.insert(cartao);
-        entityManager.clear();
-
-        assertThat(repository.findByCardNumber(cartao.getNumeroCartao())).hasValueSatisfying(found ->
-            assertThat(found.getSaldo()).isEqualTo(new BigDecimal("495.15")));
+    void mapsExistingCardWithoutResettingBalance() {
+        when(repository.findById("0123")).thenReturn(Optional.of(
+            new CartaoEntity("0123", "1234", new BigDecimal("495.15"))));
+        assertThat(adapter.findByCardNumber("0123")).hasValueSatisfying(card -> {
+            assertThat(card.getNumeroCartao()).isEqualTo("0123");
+            assertThat(card.getSenha()).isEqualTo("1234");
+            assertThat(card.getSaldo()).isEqualTo(new BigDecimal("495.15"));
+        });
     }
 
     @Test
     void returnsEmptyForUnknownCard() {
-        var number = cardNumber();
-
-        assertThat(repository.existsByCardNumber(number)).isFalse();
-        assertThat(repository.findByCardNumber(number)).isEmpty();
+        when(repository.findById("0123")).thenReturn(Optional.empty());
+        assertThat(adapter.findByCardNumber("0123")).isEmpty();
     }
 
     @Test
-    void rejectsDuplicateWithoutOverwritingPasswordOrBalance() {
-        var number = cardNumber();
-        repository.insert(Cartao.restore(number, "0123", new BigDecimal("495.15")));
-        entityManager.clear();
-
-        assertThatThrownBy(() -> repository.insert(Cartao.create(number, "9876")))
-            .isInstanceOf(DataIntegrityViolationException.class);
-
-        var persisted = jdbcTemplate.queryForMap(
-            "select senha, saldo from cartao where numero_cartao = ?", number);
-        assertThat(persisted.get("senha")).isEqualTo("0123");
-        assertThat(persisted.get("saldo")).isEqualTo(new BigDecimal("495.15"));
+    void delegatesExistenceCheck() {
+        when(repository.existsById("0123")).thenReturn(true, false);
+        assertThat(adapter.existsByCardNumber("0123")).isTrue();
+        assertThat(adapter.existsByCardNumber("0123")).isFalse();
     }
 
-    private String cardNumber() {
-        return UUID.randomUUID().toString().replace("-", "");
+    @Test
+    void translatesMysqlDuplicateWithSubmittedData() {
+        var error = new DataIntegrityViolationException("duplicate",
+            new SQLException("duplicate key", "23000", 1062));
+        doThrow(error).when(repository).insert(any(), any(), any());
+        assertThatThrownBy(() -> adapter.insert(Cartao.create("0123", "9876")))
+            .isInstanceOfSatisfying(DuplicateCartaoException.class, exception -> {
+                assertThat(exception.getNumeroCartao()).isEqualTo("0123");
+                assertThat(exception.getSenha()).isEqualTo("9876");
+            });
+        verify(repository).insert("0123", "9876", new BigDecimal("500.00"));
+        verifyNoMoreInteractions(repository);
     }
 }
