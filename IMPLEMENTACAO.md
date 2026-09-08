@@ -71,9 +71,19 @@ O comando executa a suíte, empacota a aplicação e gera os relatórios de cobe
 
 Não há limite mínimo de cobertura nem exclusões personalizadas. A configuração mede a cobertura, sem reprovar o build por percentual. O diretório `target/` já está ignorado pelo Git.
 
-Na execução desta configuração, os 74 testes passaram: cobertura de linhas de 94,87% (74/78) e de branches de 100% (8/8). As quatro linhas não cobertas pertencem à inicialização da aplicação e à conversão `CartaoMapper.toEntity`, que não é usada pela inserção SQL atual. Código gerado pode ser filtrado automaticamente pelo JaCoCo.
+Na execução desta configuração, os 74 testes passaram: cobertura de linhas de 89,16% (74/83) e de branches de 100% (8/8). As nove linhas não cobertas pertencem à inicialização da aplicação, à configuração OpenAPI e à conversão `CartaoMapper.toEntity`, que não é usada pela inserção SQL atual. Código gerado pode ser filtrado automaticamente pelo JaCoCo.
 
 Esses percentuais representam a execução da suíte isolada; não comprovam o funcionamento do SQL ou da concorrência no banco. As validações reais permanecem separadas.
+
+## Swagger UI
+
+Com a aplicação iniciada, acesse [Swagger UI](http://localhost:8080/swagger-ui.html). O documento OpenAPI está disponível em [JSON](http://localhost:8080/v3/api-docs).
+
+Expanda a operação desejada, clique em **Try it out**, preencha os dados e clique em **Execute**. A página exibe o status, o corpo da resposta e o comando curl equivalente. Crie um cartão, consulte seu saldo e utilize o mesmo número e senha na transação. As chamadas executam as operações reais e alteram o banco configurado na aplicação.
+
+A integração utiliza `springdoc-openapi-starter-webmvc-ui`. A documentação de cada operação está nas anotações `@SwaggerCreateCartao`, `@SwaggerReadBalance` e `@SwaggerAuthorizeTransacao`, nos pacotes `controller/*/swagger`. Os controllers mantêm apenas a anotação de documentação por método; a configuração geral está em `OpenApiConfiguration`.
+
+Os exemplos incluem criação, transação e erros de validação. As respostas de saldo são numéricas, recusas de transação são texto e a consulta inexistente retorna 404 sem corpo. Os contratos HTTP existentes foram preservados.
 
 ## Exemplo de uso
 

@@ -4,6 +4,8 @@ import br.com.miniautorizador.model.cartao.request.CreateCartaoRequest;
 import br.com.miniautorizador.model.cartao.response.CartaoResponse;
 import br.com.miniautorizador.service.cartao.CartaoService;
 import jakarta.validation.Valid;
+import br.com.miniautorizador.controller.cartao.swagger.SwaggerCreateCartao;
+import br.com.miniautorizador.controller.cartao.swagger.SwaggerReadBalance;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -25,11 +27,13 @@ public class CartaoController {
 
     private final CartaoService service;
 
+    @SwaggerReadBalance
     @GetMapping("/{numeroCartao}")
     public BigDecimal findBalance(@PathVariable String numeroCartao) {
         return service.findByCardNumber(numeroCartao).getSaldo();
     }
 
+    @SwaggerCreateCartao
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public CartaoResponse create(@Valid @RequestBody CreateCartaoRequest request) {
