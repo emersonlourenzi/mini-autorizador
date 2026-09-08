@@ -1,0 +1,36 @@
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+out/
+*.ipr
+
+# Logs
+*.log
+
+# Compiled class files
+*.class
+
+# Maven
+target/
+
+# Gradle
+.gradle/
+build/
+
+# Arquivos de sistema
+.DS_Store
+Thumbs.db
+
+# Arquivos temporários
+*.tmp
+*.bak
+*.swp
+
+# Arquivos do Eclipse (caso alguém use em paralelo)
+*.classpath
+*.project
+.settings/
+
+# Arquivos de testes gerados
+test-output/
