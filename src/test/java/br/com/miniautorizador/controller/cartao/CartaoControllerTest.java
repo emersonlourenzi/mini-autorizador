@@ -4,6 +4,7 @@ import br.com.miniautorizador.model.cartao.Cartao;
 import br.com.miniautorizador.service.cartao.CartaoService;
 import br.com.miniautorizador.model.cartao.request.CreateCartaoRequest;
 import br.com.miniautorizador.exceptions.cartao.DuplicateCartaoException;
+import br.com.miniautorizador.exceptions.cartao.CartaoNotFoundException;
 import br.com.miniautorizador.api.ApiExceptionHandler;
 import org.junit.jupiter.api.AfterEach;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
@@ -17,9 +18,11 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.util.UUID;
+import java.math.BigDecimal;
 
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 class CartaoControllerTest {
@@ -40,6 +43,33 @@ class CartaoControllerTest {
     @AfterEach
     void closeValidator() {
         validator.close();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"500.00", "495.15", "0.00"})
+    void returnsOnlyNumericBalance(String balance) throws Exception {
+        when(service.findByCardNumber("0123"))
+            .thenReturn(Cartao.restore("0123", "1234", new BigDecimal(balance)));
+
+        mvc.perform(get("/cartoes/0123"))
+            .andExpect(status().isOk())
+            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+            .andExpect(content().string(balance));
+
+        verify(service).findByCardNumber("0123");
+        verifyNoMoreInteractions(service);
+    }
+
+    @Test
+    void returns404WithoutBodyForUnknownCard() throws Exception {
+        when(service.findByCardNumber("0123")).thenThrow(new CartaoNotFoundException());
+
+        mvc.perform(get("/cartoes/0123"))
+            .andExpect(status().isNotFound())
+            .andExpect(content().string(""));
+
+        verify(service).findByCardNumber("0123");
+        verifyNoMoreInteractions(service);
     }
 
     @Test

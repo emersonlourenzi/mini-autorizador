@@ -41,6 +41,7 @@ class CartaoPersistenceAdapter implements CartaoRepository {
 
     @Override
     public Optional<Cartao> findByCardNumber(String numeroCartao) {
-        return repository.findById(numeroCartao).map(CartaoMapper::toModel);
+        return repository.findById(numeroCartao)
+            .map(CartaoMapper::toModel);
     }
 }

@@ -7,10 +7,14 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.math.BigDecimal;
 
 import static br.com.miniautorizador.mapper.cartao.CartaoMapper.toResponse;
 
@@ -20,6 +24,11 @@ import static br.com.miniautorizador.mapper.cartao.CartaoMapper.toResponse;
 public class CartaoController {
 
     private final CartaoService service;
+
+    @GetMapping("/{numeroCartao}")
+    public BigDecimal findBalance(@PathVariable String numeroCartao) {
+        return service.findByCardNumber(numeroCartao).getSaldo();
+    }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)

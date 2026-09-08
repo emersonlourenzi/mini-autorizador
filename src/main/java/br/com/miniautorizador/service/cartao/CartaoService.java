@@ -1,6 +1,7 @@
 package br.com.miniautorizador.service.cartao;
 
 import br.com.miniautorizador.exceptions.cartao.DuplicateCartaoException;
+import br.com.miniautorizador.exceptions.cartao.CartaoNotFoundException;
 import br.com.miniautorizador.model.cartao.Cartao;
 import br.com.miniautorizador.model.cartao.request.CreateCartaoRequest;
 import br.com.miniautorizador.repository.cartao.CartaoRepository;
@@ -13,6 +14,12 @@ import org.springframework.transaction.annotation.Transactional;
 public class CartaoService {
 
     private final CartaoRepository repository;
+
+    @Transactional(readOnly = true)
+    public Cartao findByCardNumber(String numeroCartao) {
+        return repository.findByCardNumber(numeroCartao)
+            .orElseThrow(CartaoNotFoundException::new);
+    }
 
     @Transactional
     public Cartao create(CreateCartaoRequest request) {
