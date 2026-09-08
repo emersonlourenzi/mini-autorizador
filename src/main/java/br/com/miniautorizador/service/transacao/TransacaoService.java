@@ -4,6 +4,7 @@ import br.com.miniautorizador.exceptions.transacao.TransacaoNegadaException;
 import br.com.miniautorizador.model.cartao.Cartao;
 import br.com.miniautorizador.model.transacao.request.TransacaoRequest;
 import br.com.miniautorizador.repository.cartao.CartaoRepository;
+import br.com.miniautorizador.service.security.PasswordHasher;
 import br.com.miniautorizador.util.enums.MotivoNegacao;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -16,6 +17,7 @@ import java.util.Optional;
 public class TransacaoService {
 
     private final CartaoRepository repository;
+    private final PasswordHasher passwordHasher;
 
     @Transactional
     public String authorize(TransacaoRequest request) {
@@ -28,7 +30,7 @@ public class TransacaoService {
 
     private Cartao validatePassword(Cartao cartao, String senha) {
         return Optional.of(cartao)
-            .filter(value -> value.getSenha().equals(senha))
+            .filter(value -> passwordHasher.matches(senha, value.getSenha()))
             .orElseThrow(() -> denied(MotivoNegacao.SENHA_INVALIDA));
     }
 

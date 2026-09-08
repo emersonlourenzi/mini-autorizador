@@ -6,6 +6,8 @@ import br.com.miniautorizador.model.transacao.request.TransacaoRequest;
 import br.com.miniautorizador.repository.cartao.CartaoRepository;
 import br.com.miniautorizador.util.enums.MotivoNegacao;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
+import br.com.miniautorizador.service.security.PasswordHasher;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -17,13 +19,19 @@ import static org.mockito.Mockito.*;
 
 class TransacaoServiceTest {
     private final CartaoRepository repository = mock(CartaoRepository.class);
-    private final TransacaoService service = new TransacaoService(repository);
+    private final PasswordHasher hasher = mock(PasswordHasher.class);
+    private final TransacaoService service = new TransacaoService(repository, hasher);
+
+    @BeforeEach
+    void setupPassword() {
+        when(hasher.matches("0123", "hash-simulado")).thenReturn(true);
+    }
 
     @ParameterizedTest
     @ValueSource(strings = {"10.00", "500.00", "0.01", "10"})
     void debitsExactAmount(String amount) {
         when(repository.findByCardNumber("0123"))
-            .thenReturn(Optional.of(Cartao.create("0123", "0123")));
+            .thenReturn(Optional.of(Cartao.create("0123", "hash-simulado")));
         when(repository.debitIfSufficientBalance("0123", new BigDecimal(amount))).thenReturn(true);
         assertThat(service.authorize(request("0123", amount))).isEqualTo("OK");
         var order = inOrder(repository);
@@ -41,14 +49,14 @@ class TransacaoServiceTest {
     @Test
     void rejectsWrongPasswordBeforeCheckingInsufficientBalance() {
         when(repository.findByCardNumber("0123"))
-            .thenReturn(Optional.of(Cartao.restore("0123", "0123", BigDecimal.ZERO)));
+            .thenReturn(Optional.of(Cartao.restore("0123", "hash-simulado", BigDecimal.ZERO)));
         assertDenied(request("9999", "10.00"), MotivoNegacao.SENHA_INVALIDA);
     }
 
     @Test
     void rejectsInsufficientBalanceWithoutDebit() {
         when(repository.findByCardNumber("0123"))
-            .thenReturn(Optional.of(Cartao.create("0123", "0123")));
+            .thenReturn(Optional.of(Cartao.create("0123", "hash-simulado")));
         when(repository.debitIfSufficientBalance("0123", new BigDecimal("500.01"))).thenReturn(false);
         assertThatThrownBy(() -> service.authorize(request("0123", "500.01")))
             .isInstanceOfSatisfying(TransacaoNegadaException.class,
@@ -61,7 +69,7 @@ class TransacaoServiceTest {
     @Test
     void deniesWhenDatabaseBalanceChangedSinceRead() {
         when(repository.findByCardNumber("0123"))
-            .thenReturn(Optional.of(Cartao.create("0123", "0123")));
+            .thenReturn(Optional.of(Cartao.create("0123", "hash-simulado")));
         when(repository.debitIfSufficientBalance("0123", new BigDecimal("10.00"))).thenReturn(false);
         assertThatThrownBy(() -> service.authorize(request("0123", "10.00")))
             .isInstanceOfSatisfying(TransacaoNegadaException.class,
@@ -71,7 +79,7 @@ class TransacaoServiceTest {
     @Test
     void propagatesWriteFailure() {
         when(repository.findByCardNumber("0123"))
-            .thenReturn(Optional.of(Cartao.create("0123", "0123")));
+            .thenReturn(Optional.of(Cartao.create("0123", "hash-simulado")));
         var error = new IllegalStateException("database unavailable");
         when(repository.debitIfSufficientBalance(any(), any())).thenThrow(error);
         assertThatThrownBy(() -> service.authorize(request("0123", "10.00"))).isSameAs(error);

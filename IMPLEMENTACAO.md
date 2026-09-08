@@ -96,6 +96,22 @@ Resposta: `201` com texto `OK`. Após essa compra, a consulta retorna `490.00`.
 | Transação sem saldo suficiente | 422, texto `SALDO_INSUFICIENTE` |
 | Entrada inválida ou JSON malformado | 400 |
 
+Erros de validação dos campos retornam HTTP 400 com o campo e a mensagem, sem incluir o valor rejeitado. Exemplo de senha com cinco dígitos:
+
+```json
+{
+  "status": 400,
+  "erros": [
+    {
+      "campo": "senha",
+      "mensagem": "A senha deve conter exatamente 4 dígitos numéricos."
+    }
+  ]
+}
+```
+
+A lista pode conter mais de um erro. JSON malformado continua retornando 400 pelo tratamento padrão do Spring. Os contratos de duplicidade, cartão inexistente e recusa de transação permanecem conforme a tabela acima.
+
 ## Organização e decisões
 
 - `controller`: contratos HTTP; 
@@ -112,9 +128,10 @@ Valores monetários usam `BigDecimal` e coluna `DECIMAL(19,2)`. Cartões iniciam
 ### Suposições sobre entradas
 
 - Número do cartão obrigatório, com até 32 caracteres; sem imposição de tamanho fixo ou algoritmo de validação.
-- Senha obrigatória, com até 100 caracteres, preservada sem remover espaços ou zeros à esquerda. Valores compostos somente por espaços são inválidos.
+- Na criação, a senha deve conter exatamente quatro dígitos ASCII (`0` a `9`). Zeros à esquerda são preservados; letras, espaços, símbolos e outros tamanhos retornam 400.
+- Nas transações, `senhaCartao` permanece obrigatória e limitada a 100 caracteres; uma senha que não corresponde ao hash armazenado resulta em `SENHA_INVALIDA`.
 - Valor de transação obrigatório, mínimo `0.01`, com até 17 dígitos inteiros e duas casas decimais. Valores com mais casas são rejeitados, sem arredondamento, inclusive `10.000`.
-- Entradas que violam essas validações retornam 400. O formato de quatro dígitos não é inferido do exemplo do enunciado nesta versão.
+- Entradas que violam essas validações retornam 400. A restrição de quatro dígitos na criação é uma decisão adicional ao enunciado.
 
 ### Escopo desta versão
 
@@ -135,4 +152,10 @@ Com saldo de 10.00, duas compras simultâneas de 10.00 resultam em uma aprovaç�
 
 A validação separada com MySQL 5.7 e duas JVMs confirmou 20 rodadas do primeiro cenário e duas do segundo. Os saldos foram consultados pelas duas instâncias após cada rodada e confirmados por SQL ao final. Também foram executadas 120 rodadas com quatro JVMs reais: grupos de três ou quatro compras simultâneas sobre o mesmo cartão, com saldo para uma, duas ou todas as compras. As 420 requisições concorrentes produziram exatamente as aprovações permitidas pelo saldo, e os 120 cartões terminaram com saldo zero, conferido nas quatro instâncias e por SQL. Essas validações não integram a suíte unitária e não equivalem a um teste de carga.
 
-As senhas ainda são armazenadas sem hash. BCrypt e a restrição de quatro dígitos serão incorporados em evoluções separadas, mantendo os contratos da API.
+### Armazenamento de senhas
+
+Novos cartões armazenam somente o hash BCrypt, com custo 12 e salt aleatório. A coluna existente comporta o hash de 60 caracteres, sem alteração de schema. A conferência de senha usa BCrypt; o hash nunca é devolvido pela API. As respostas de criação e duplicidade contêm a senha enviada na requisição, conforme o contrato, inclusive quando a duplicidade é detectada pela chave primária.
+
+Foi adicionado apenas o módulo `spring-security-crypto`; os endpoints continuam sem autenticação HTTP adicional.
+
+Cartões antigos com senha em texto puro não são migrados nem excluídos automaticamente e deixam de autenticar. Para testar esta versão, crie cartões com números novos ou utilize um banco separado por meio de `DB_NAME`. Hashes BCrypt já existentes continuam sendo verificados normalmente.

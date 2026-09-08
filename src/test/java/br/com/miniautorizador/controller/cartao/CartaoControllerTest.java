@@ -122,6 +122,52 @@ class CartaoControllerTest {
         verifyNoInteractions(service);
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = {"123", "12345", "12a4", "１２３４", " 1234", "1234 ", "12.4"})
+    void rejectsPasswordOutsideFourAsciiDigits(String password) throws Exception {
+        mvc.perform(post("/cartoes").contentType(MediaType.APPLICATION_JSON)
+                .content(body("0123", password)))
+            .andExpect(status().isBadRequest());
+        verifyNoInteractions(service);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"0000", "0123", "9876"})
+    void acceptsFourDigitsAndReturnsSubmittedPassword(String password) throws Exception {
+        var request = new CreateCartaoRequest("0123", password);
+        when(service.create(request)).thenReturn(Cartao.create("0123", "hash-simulado"));
+        mvc.perform(post("/cartoes").contentType(MediaType.APPLICATION_JSON)
+                .content(body("0123", password)))
+            .andExpect(status().isCreated())
+            .andExpect(content().json(body("0123", password), JsonCompareMode.STRICT));
+        verify(service).create(request);
+    }
+
+    @Test
+    void explainsInvalidPasswordWithoutExposingSubmittedValue() throws Exception {
+        mvc.perform(post("/cartoes").contentType(MediaType.APPLICATION_JSON)
+                .content(body("0123", "12345")))
+            .andExpect(status().isBadRequest())
+            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+            .andExpect(content().json("""
+                {"status":400,"erros":[{"campo":"senha","mensagem":"A senha deve conter exatamente 4 dígitos numéricos."}]}
+                """, JsonCompareMode.STRICT));
+        verifyNoInteractions(service);
+    }
+
+    @Test
+    void reportsAllMissingFields() throws Exception {
+        mvc.perform(post("/cartoes").contentType(MediaType.APPLICATION_JSON).content("{}"))
+            .andExpect(status().isBadRequest())
+            .andExpect(content().json("""
+                {"status":400,"erros":[
+                  {"campo":"numeroCartao","mensagem":"O número do cartão é obrigatório."},
+                  {"campo":"senha","mensagem":"A senha é obrigatória."}
+                ]}
+                """, JsonCompareMode.STRICT));
+        verifyNoInteractions(service);
+    }
+
     private String body(String number, String password) {
         return """
             {"numeroCartao":"%s","senha":"%s"}

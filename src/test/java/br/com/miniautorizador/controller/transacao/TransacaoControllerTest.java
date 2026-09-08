@@ -78,6 +78,16 @@ class TransacaoControllerTest {
         verifyNoInteractions(service);
     }
 
+    @org.junit.jupiter.api.Test
+    void explainsInvalidAmount() throws Exception {
+        mvc.perform(post("/transacoes").contentType(MediaType.APPLICATION_JSON).content(body("0")))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.status").value(400))
+            .andExpect(jsonPath("$.erros[0].campo").value("valor"))
+            .andExpect(jsonPath("$.erros[0].mensagem").value("O valor deve ser maior ou igual a 0.01."));
+        verifyNoInteractions(service);
+    }
+
     private String body(String amount) {
         return """
             {"numeroCartao":"0123","senhaCartao":"0123","valor":%s}
