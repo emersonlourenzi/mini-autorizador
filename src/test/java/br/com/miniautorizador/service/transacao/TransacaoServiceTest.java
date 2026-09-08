@@ -22,7 +22,7 @@ class TransacaoServiceTest {
     void debitsExactAmount(String amount, String expectedBalance) {
         when(repository.findByCardNumber("0123"))
             .thenReturn(Optional.of(Cartao.create("0123", "0123")));
-        service.authorize(request("0123", amount));
+        assertThat(service.authorize(request("0123", amount))).isEqualTo("OK");
         var order = inOrder(repository);
         order.verify(repository).findByCardNumber("0123");
         order.verify(repository).updateBalance("0123", new BigDecimal(expectedBalance));

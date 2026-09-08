@@ -118,6 +118,8 @@ Valores monetários usam `BigDecimal` e coluna `DECIMAL(19,2)`. Cartões iniciam
 
 ### Escopo desta versão
 
-Esta é a implementação básica dos contratos. O débito calcula o novo saldo a partir da leitura e o grava dentro de uma transação; isso ainda não garante correção entre compras simultâneas. A proteção de concorrência e o desafio sem `if` ainda não estão implementados.
+O desafio sem `if` está implementado no código da aplicação, sem utilizar `break` ou `continue`. As verificações usam `Optional`, `filter`, `map` e `orElseThrow`, preservando a ordem das regras e os motivos de recusa.
+
+O débito calcula o novo saldo a partir da leitura e o grava dentro de uma transação; isso ainda não garante correção entre compras simultâneas. A proteção de concorrência permanece para uma evolução separada.
 
 As senhas ainda são armazenadas sem hash. BCrypt e a restrição de quatro dígitos serão incorporados em evoluções separadas, mantendo os contratos da API.

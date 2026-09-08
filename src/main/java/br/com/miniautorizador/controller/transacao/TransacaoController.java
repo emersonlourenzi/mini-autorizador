@@ -22,7 +22,6 @@ public class TransacaoController {
     @PostMapping(produces = MediaType.TEXT_PLAIN_VALUE)
     @ResponseStatus(HttpStatus.CREATED)
     public String authorize(@Valid @RequestBody TransacaoRequest request) {
-        service.authorize(request);
-        return "OK";
+        return service.authorize(request);
     }
 }

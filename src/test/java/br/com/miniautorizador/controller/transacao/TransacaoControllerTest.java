@@ -39,6 +39,7 @@ class TransacaoControllerTest {
     @ParameterizedTest
     @ValueSource(strings = {"10", "10.0", "10.00", "0.01", "500.00"})
     void returns201WithPlainOk(String amount) throws Exception {
+        when(service.authorize(any())).thenReturn("OK");
         mvc.perform(post("/transacoes").contentType(MediaType.APPLICATION_JSON).content(body(amount)))
             .andExpect(status().isCreated())
             .andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_PLAIN))
